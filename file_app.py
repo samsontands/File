@@ -4,20 +4,17 @@ import base64
 from datetime import datetime
 
 # Set page config
-st.set_page_config(page_title="File, Font, and Text Upload and Download App", layout="wide")
+st.set_page_config(page_title="File, Font, and Text Upload and Display App", layout="wide")
 
 # Function to save uploaded file
 def save_uploaded_file(uploaded_file, directory):
-    # Create directory if it doesn't exist
     if not os.path.exists(directory):
         os.makedirs(directory)
     
-    # Generate a unique filename with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{uploaded_file.name}"
     file_path = os.path.join(directory, filename)
     
-    # Save the file
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     
@@ -28,11 +25,15 @@ def get_download_link(file_path, file_name):
     with open(file_path, "rb") as f:
         data = f.read()
     b64 = base64.b64encode(data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
-    return href
+    return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
+
+# Function to read text file content
+def read_text_file(file_path):
+    with open(file_path, "r") as f:
+        return f.read()
 
 # Main app
-st.title("File, Font, and Text Upload and Download App")
+st.title("File, Font, and Text Upload and Display App")
 
 # File upload section
 st.header("Upload Files")
@@ -72,8 +73,8 @@ if st.button("Save Text"):
     else:
         st.warning("Please enter both text and filename")
 
-# File download section
-st.header("Download Files")
+# File display and download section
+st.header("View and Download Files")
 
 # Function to display files from a specific directory
 def display_files(directory, header):
@@ -83,9 +84,20 @@ def display_files(directory, header):
         if files:
             for file in files:
                 file_path = os.path.join(directory, file)
-                st.markdown(get_download_link(file_path, file), unsafe_allow_html=True)
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"**{file}**")
+                with col2:
+                    st.markdown(get_download_link(file_path, file), unsafe_allow_html=True)
+                
+                # If it's a text file, display its content
+                if directory == "uploads/texts":
+                    with st.expander("View Content"):
+                        content = read_text_file(file_path)
+                        st.text_area("", value=content, height=200, key=f"text_{file}")
+                        st.markdown("*You can copy the text from the box above.*")
         else:
-            st.info(f"No {header.lower()} available for download")
+            st.info(f"No {header.lower()} available")
     else:
         st.info(f"No {header.lower()} have been uploaded yet")
 
