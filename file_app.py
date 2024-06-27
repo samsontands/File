@@ -8,7 +8,7 @@ st.set_page_config(page_title="File Management App with Login", layout="wide")
 
 # User credentials
 USERS = {
-    "samson tan": "lala1112",
+    "samson tan": "117853",
     "117743": "117743",
     "116627": "116627"
 }
@@ -34,6 +34,11 @@ def get_download_link(file_path, file_name):
         data = f.read()
     b64 = base64.b64encode(data).decode()
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
+
+# Function to read text file content
+def read_text_file(file_path):
+    with open(file_path, "r") as f:
+        return f.read()
 
 # Login function
 def login(username, password):
@@ -81,22 +86,66 @@ if st.session_state.logged_in:
             file_name, file_path = save_uploaded_file(uploaded_file, "uploads/files", st.session_state.username)
             st.success(f"File uploaded successfully: {file_name}")
 
+    # Font upload section
+    st.header("Upload Fonts")
+    uploaded_fonts = st.file_uploader("Choose font files to upload (.ttf, .otf)", 
+                                      accept_multiple_files=True, 
+                                      type=['ttf', 'otf'],
+                                      key="font_files")
+
+    if uploaded_fonts:
+        for uploaded_font in uploaded_fonts:
+            font_name, font_path = save_uploaded_file(uploaded_font, "uploads/fonts", st.session_state.username)
+            st.success(f"Font uploaded successfully: {font_name}")
+
+    # Text input section
+    st.header("Upload Text")
+    text_input = st.text_area("Enter text to save as a file")
+    text_filename = st.text_input("Enter filename for the text (include extension, e.g., notes.txt)")
+
+    if st.button("Save Text"):
+        if text_input and text_filename:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_name = f"{timestamp}_{text_filename}"
+            user_dir = os.path.join("uploads/texts", st.session_state.username)
+            os.makedirs(user_dir, exist_ok=True)
+            file_path = os.path.join(user_dir, file_name)
+            with open(file_path, "w") as f:
+                f.write(text_input)
+            st.success(f"Text saved as file: {file_name}")
+        else:
+            st.warning("Please enter both text and filename")
+
     # File display and download section
     st.header("View and Download Your Files")
 
-    # Display user's files
-    user_files_dir = os.path.join("uploads/files", st.session_state.username)
-    if os.path.exists(user_files_dir):
-        files = os.listdir(user_files_dir)
-        if files:
-            for file in files:
-                file_path = os.path.join(user_files_dir, file)
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"**{file}**")
-                with col2:
-                    st.markdown(get_download_link(file_path, file), unsafe_allow_html=True)
+    # Function to display files from a specific directory
+    def display_files(directory, header, file_type="general"):
+        st.subheader(header)
+        user_dir = os.path.join(directory, st.session_state.username)
+        if os.path.exists(user_dir):
+            files = os.listdir(user_dir)
+            if files:
+                for file in files:
+                    file_path = os.path.join(user_dir, file)
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown(f"**{file}**")
+                    with col2:
+                        st.markdown(get_download_link(file_path, file), unsafe_allow_html=True)
+                    
+                    # If it's a text file, display its content
+                    if file_type == "text":
+                        with st.expander("View Content"):
+                            content = read_text_file(file_path)
+                            st.text_area("", value=content, height=200, key=f"text_{file}")
+                            st.markdown("*You can copy the text from the box above.*")
+            else:
+                st.info(f"No {header.lower()} available")
         else:
-            st.info("No files available")
-    else:
-        st.info("No files have been uploaded yet")
+            st.info(f"No {header.lower()} have been uploaded yet")
+
+    # Display files for each category
+    display_files("uploads/files", "General Files")
+    display_files("uploads/fonts", "Fonts")
+    display_files("uploads/texts", "Text Files", file_type="text")
