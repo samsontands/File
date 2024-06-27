@@ -8,7 +8,7 @@ st.set_page_config(page_title="File Management App with Login", layout="wide")
 
 # User credentials
 USERS = {
-    "samson tan": "lala1112",
+    "samson tan": "117853",
     "117743": "117743",
     "116627": "116627"
 }
@@ -48,6 +48,8 @@ def login(username, password):
 # Initialize session state
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+if 'username' not in st.session_state:
+    st.session_state.username = None
 
 # Main app
 st.title("File Management App with Login")
@@ -60,6 +62,7 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if login(username, password):
             st.session_state.logged_in = True
+            st.session_state.username = username
             st.success("Logged in successfully!")
             st.experimental_rerun()
         else:
@@ -67,9 +70,10 @@ if not st.session_state.logged_in:
 
 # File management section (only visible after login)
 if st.session_state.logged_in:
-    st.header(f"Welcome, {username}!")
+    st.header(f"Welcome, {st.session_state.username}!")
     if st.button("Logout"):
         st.session_state.logged_in = False
+        st.session_state.username = None
         st.experimental_rerun()
 
     # File upload section
