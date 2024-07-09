@@ -9,7 +9,7 @@ st.set_page_config(page_title="File Management App with Login", layout="wide")
 # User credentials
 USERS = {
     "samson tan": "117853",
-    "117743": "117743",
+    "ud52": "ud52",
     "116627": "116627"
 }
 
